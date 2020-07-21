@@ -31,6 +31,11 @@ import streamlit as st
 # Data handling dependencies
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# import label encoder
+from sklearn.preprocessing import MultiLabelBinarizer, LabelEncoder
 
 # Custom Libraries
 from utils.data_loader import load_movie_titles
@@ -39,13 +44,19 @@ from recommenders.content_based import content_model
 
 # Data Loading
 title_list = load_movie_titles('resources/data/movies.csv')
-
+movies = pd.read_csv('resources/data/movies.csv')
+imdb = pd.read_csv('resources/data/imdb_data.csv')
+tags = pd.read_csv('resources/data/tags.csv')
+train = pd.read_csv('resources/data/train.csv')
+# test = pd.read_csv('resources/data/test.csv')
+g_tags = pd.read_csv('resources/data/genome_tags.csv')
+g_scores = pd.read_csv('resources/data/genome_scores.csv')
 # App declaration
 def main():
 
     # DO NOT REMOVE the 'Recommender System' option below, however,
     # you are welcome to add more options to enrich your app.
-    page_options = ["Recommender System","Solution Overview"]
+    page_options = ["Recommender System","Exploratory Data Analysis", "Solution Overview"]
 
     # -------------------------------------------------------------------
     # ----------- !! THIS CODE MUST NOT BE ALTERED !! -------------------
@@ -100,6 +111,27 @@ def main():
     # -------------------------------------------------------------------
 
     # ------------- SAFE FOR ALTERING/EXTENSION -------------------
+    
+    if page_selection == "Exploratory Data Analysis":
+        st.title("Exploratory Data Analysis")
+        # Ensure movies['genres'] column contains strings and split into a list of genres
+        movies['genres'] = movies['genres'].apply(str).apply(lambda x: x.split('|'))
+
+        # Create a label binarizer class
+        mlb = MultiLabelBinarizer()
+
+        # Create a new dataframe with the binarized genres
+        df_genres = pd.DataFrame(mlb.fit_transform(movies['genres']), columns=mlb.classes_)
+        #df = pd.merge(left=movies,right=df_genres, left_index=True, right_index=True)
+        a = pd.melt(df_genres)
+        plt.figure(figsize=(10,8))
+        sns.countplot(data=a.loc[a['value'] == 1], y='variable', palette = 'viridis')
+        plt.title('* Some movies are labelled with multiple genres')
+        plt.suptitle('Number of movies belonging to each category', fontsize=15)
+        plt.xlabel('Count')
+        plt.ylabel('')
+        st.pyplot()
+
     if page_selection == "Solution Overview":
         st.title("Solution Overview")
         st.write("Describe your winning approach on this page")
