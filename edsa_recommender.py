@@ -114,6 +114,7 @@ def main():
     
     if page_selection == "Exploratory Data Analysis":
         st.title("Exploratory Data Analysis")
+        ########## Movie count plot ###########
         # Ensure movies['genres'] column contains strings and split into a list of genres
         movies['genres'] = movies['genres'].apply(str).apply(lambda x: x.split('|'))
 
@@ -122,6 +123,7 @@ def main():
 
         # Create a new dataframe with the binarized genres
         df_genres = pd.DataFrame(mlb.fit_transform(movies['genres']), columns=mlb.classes_)
+        df = pd.merge(left=movies,right=df_genres, left_index=True, right_index=True)
         #df = pd.merge(left=movies,right=df_genres, left_index=True, right_index=True)
         a = pd.melt(df_genres)
         plt.figure(figsize=(10,8))
@@ -132,6 +134,35 @@ def main():
         plt.ylabel('')
         st.pyplot()
 
+        # ###### pie chart plot  #########
+        # Calculate the number of ratings per genre of movie
+        df_genres['movieId'] = df['movieId']
+        genre_ratings = pd.merge(left=train, right=df_genres, left_on='movieId', right_on='movieId')
+        genre_ratings.drop(['userId', 'movieId', 'timestamp'], axis=1, inplace=True)
+        genre_ratings = genre_ratings.groupby(by=['rating'], axis=0).sum()
+
+        # Examine how the different movie genres are historically rated by users
+        names = list(genre_ratings.columns)
+        labels = list(genre_ratings.index)
+        colours = sns.color_palette(palette='viridis', n_colors=len(labels), desat=None)
+
+        fig = plt.figure()
+        fig.subplots_adjust(hspace=1, wspace=1)
+        for i in range(1, 21):
+            plt.subplot(4, 5, i)
+            plt.pie(genre_ratings[names[i-1]], colors=colours, radius=1.8, autopct='%0.1f%%',pctdistance=1.2)
+            fig.set_size_inches(20, 16)
+            plt.title(names[i-1], pad=58, fontsize=14)
+        plt.legend(labels, title='Rating', fancybox=True, loc=6, bbox_to_anchor=(1.8, 6.5))
+        st.pyplot()
+
+        # Examine movie ratings from all users
+        plt.figure(figsize=(6,4))
+        sns.countplot(train['rating'], palette = 'viridis')
+        plt.title('Distribution of ratings from all users')
+        plt.xlabel('Rating')
+        plt.ylabel('Count')
+        st.pyplot()
     if page_selection == "Solution Overview":
         st.title("Solution Overview")
         st.write("Describe your winning approach on this page")
